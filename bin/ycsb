@@ -20,6 +20,7 @@ import errno
 import fnmatch
 import io
 import os
+import re
 import shlex
 import sys
 import subprocess
@@ -32,6 +33,9 @@ except ImportError:
     exit(1)
 
 BASE_URL = "https://github.com/brianfrankcooper/YCSB/tree/master/"
+
+ROCKSDB_JAR = "/home/fwu/caching/java/target/rocksdbjni-6.2.0-linux64.jar"
+
 COMMANDS = {
     "shell" : {
         "command"     : "",
@@ -318,6 +322,14 @@ def main():
         db_dir = os.path.join(ycsb_home, db_location)
         # goes first so we can rely on side-effect of package
         maven_says = get_classpath_from_maven(project)
+        # replace remove rocksdbjni.jar with our compiled one
+        if binding == "rocksdb":
+            line = re.sub(
+                r":[^:]*rocksdb[^:]*:", 
+                ":%s:" % ROCKSDB_JAR, 
+                maven_says)
+            debug(line)
+            maven_says = line
         # TODO when we have a version property, skip the glob
         cp = find_jars(os.path.join(db_dir, "target"),
                        project + "*.jar")
